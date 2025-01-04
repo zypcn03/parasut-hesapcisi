@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>♡ Paraşüt Hesapçısı ♡</title>
+    <style>
+        body {
+            font-family: Helvetica, neue helvatica ;
+            background: url('pinterest.jpg');
+            color: #742230;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #eddbdf;
+            color: #742230;
+            padding: 1em 0;
+            text-align: center;
+        }
+
+        main {
+            max-width: 800px;
+            margin: 2em auto;
+            background: #eddbdf;
+            padding: 1.5em;
+            border-radius: 8px;
+            box-shadow: 0 0 10px #742230(0, 0, 0, 0.1);
+        }
+
+        label {
+            display: block;
+            margin-top: 1em;
+            font-weight: bold;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 0.5em;
+            margin-top: 0.5em;
+            border: 1px solid #efeae5;
+            border-radius: 4px;
+        }
+
+        button {
+            background-color: #ab7b7d;
+            color: white;
+            border: none;
+            padding: 0.75em 1.5em;
+            margin-top: 1em;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+
+        button:hover {
+    background-color: #ab7b7d;
+    color: white;
+    border: none;
+    padding: 1em 1.5em;
+    margin-top: 1em;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1em;
+    position: relative;
+    width: 60px;
+    height: 60px;
+    text-align: center;
+    display: inline-block;
+}
+
+button::before,
+button::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: #ab7b7d;
+}
+
+button::before {
+    left: -30px;
+}
+
+button::after {
+    right: -30px;
+}
+
+button:hover {
+    background-color: #8f5d5f;
+}
+
+button::before,
+button::after {
+    top: -30px;
+}
+
+        .results p {
+            margin: 0.5em 0;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>♡  Paraşüt Hesapçısı ♡</h1>
+    </header>
+    <main>
+        <form id="parachuteForm">
+            <label for="m_ana">🎀Ana Paraşüt için taşınacak kütle (kg):</label>
+            <input type="number" id="m_ana" required>
+
+            <label for="m_yuk">🎀Yük Paraşütü için taşınacak kütle (kg):</label>
+            <input type="number" id="m_yuk" required>
+
+            <label for="m_drag">🎀Drag Paraşütü için taşınacak kütle (kg):</label>
+            <input type="number" id="m_drag" required>
+
+            <button type="button" onclick="calculate()">Hesapla🍒</button>
+        </form>
+
+        <div id="results" class="results" style="display: none;"></div>
+    </main>
+
+    <script>
+        function calculate() {
+            const Cd = 0.8;
+            const kumas_yogunlugu = 0.135;
+            const p = 1.225;
+            const g = 9.81;
+
+            const m_ana = parseFloat(document.getElementById('m_ana').value);
+            const m_yuk = parseFloat(document.getElementById('m_yuk').value);
+            const m_drag = parseFloat(document.getElementById('m_drag').value);
+
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
+
+            if (isNaN(m_ana) || isNaN(m_yuk) || isNaN(m_drag)) {
+                resultsDiv.innerHTML = '<p>Lütfen tüm alanlar için geçerli değerler girin.</p>';
+                resultsDiv.style.display = 'block';
+                return;
+            }
+
+            const scenarios = [
+                { name: 'Ana Paraşüt', mass: m_ana, V_min: 7.5, V_max: 8.5 },
+                { name: 'Yük Paraşütü', mass: m_yuk, V_min: 7.5, V_max: 8.5 },
+                { name: 'Drag Paraşütü', mass: m_drag, V_min: 20.5, V_max: 30 }
+            ];
+
+            scenarios.forEach(({ name, mass, V_min, V_max }) => {
+                let found = false;
+                let D, Ap, Aa, parasut_kutlesi, V_check;
+                let V_final = null; // Döngü dışına bir V değişkeni tanımlayın
+
+                for (let V = V_min; V <= V_max; V += 0.01) {
+                    D = Math.sqrt((8 * mass * g) / (Math.PI * p * Cd * V ** 2));
+                    Ap = Math.PI * (D / 2) ** 2;
+                    Aa = Ap * 0.1;
+                    parasut_kutlesi = (Ap - Aa) * kumas_yogunlugu;
+                    V_check = Math.sqrt((2 * mass * g) / (Ap * p * Cd));
+
+                    if (Math.abs(V - V_check) < 0.05) {
+                        found = true;
+                        V_final = V; // Bulunan V değerini kaydedin
+                        break;
+                    }
+                }
+
+                resultsDiv.innerHTML += `<h3>${name} Hesaplamaları</h3>`;
+
+                if (found) {
+                    resultsDiv.innerHTML += `<p>Hesaplanan Paraşüt Çapı (D): ${D.toFixed(5)} m</p>`;
+                    resultsDiv.innerHTML += `<p>Hesaplanan Paraşüt Alanı (Ap - Aa): ${(Ap - Aa).toFixed(5)} m²</p>`;
+                    resultsDiv.innerHTML += `<p>Hesaplanan Paraşüt Kütlesi: ${parasut_kutlesi.toFixed(5)} kg</p>`;
+                    resultsDiv.innerHTML += `<p>Hesaplanan Hız (V): ${V_final.toFixed(5)} m/s</p>`;
+                } else {
+                    resultsDiv.innerHTML += '<p>Belirtilen hız aralığında uygun bir çözüm bulunamadı.</p>';
+                }
+            });
+
+            resultsDiv.style.display = 'block';
+        }
+    </script>
+</body>
+
+</html>
